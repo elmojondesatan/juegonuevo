@@ -1,0 +1,12 @@
+body {
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(to right, #fdfbfb, #ebedee);
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+#root {
+    max-width: 600px;
+    margin: auto;
+    padding: 2rem;
+}
