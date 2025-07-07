@@ -1,12 +1,9 @@
 import { niveles, tipos } from "./data.js";
 
-let nivel = 1;
-let vidas = 3;
-let tiempo = 30;
 let basuraActual = [];
 let intervaloTiempo;
 
-export function crearBasura() {
+export function crearBasura(jugador, pasarNivel, perderVida, finalizarJuego) {
   clearInterval(intervaloTiempo); // Resetear temporizador
 
   let contenedor = document.createElement("div");
@@ -18,11 +15,11 @@ export function crearBasura() {
 
   const tiempoSpan = document.createElement("span");
   tiempoSpan.id = "tiempo";
-  tiempoSpan.textContent = `⏱️ Tiempo: ${tiempo}s`;
+  tiempoSpan.textContent = `⏱️ Tiempo: 30s`;
 
   const vidasSpan = document.createElement("span");
   vidasSpan.id = "vidas";
-  vidasSpan.textContent = "❤️".repeat(vidas);
+  vidasSpan.textContent = "❤️".repeat(jugador.vidas);
 
   header.appendChild(tiempoSpan);
   header.appendChild(vidasSpan);
@@ -31,7 +28,7 @@ export function crearBasura() {
   // Título del nivel
   const tituloNivel = document.createElement("h2");
   tituloNivel.className = "titulo-nivel";
-  tituloNivel.textContent = `🧪 Nivel ${nivel}`;
+  tituloNivel.textContent = `🧪 Nivel ${jugador.nivel}`;
   contenedor.appendChild(tituloNivel);
 
   // Botes de reciclaje
@@ -50,7 +47,7 @@ export function crearBasura() {
       const id = e.dataTransfer.getData("text");
       const basura = document.getElementById(id);
       e.target.appendChild(basura);
-      basura.style.fontSize = "1.6rem"; // Disminuye tamaño al entrar al bote
+      basura.style.fontSize = "1.6rem";
     });
 
     contenedorBotes.appendChild(bote);
@@ -63,7 +60,7 @@ export function crearBasura() {
   contenedorBasura.className = "basura";
   contenedorBasura.id = "zona-basura";
 
-  basuraActual = cargarObjetosDelNivel(nivel);
+  basuraActual = cargarObjetosDelNivel(jugador.nivel);
   basuraActual.forEach((item, index) => {
     let basura = document.createElement("div");
     basura.className = "item-basura";
@@ -85,7 +82,9 @@ export function crearBasura() {
   const btn = document.createElement("button");
   btn.textContent = "✅ Verificar";
   btn.className = "verificar";
-  btn.addEventListener("click", verificarClasificacion);
+  btn.addEventListener("click", () =>
+    verificarClasificacion(jugador, pasarNivel, perderVida, finalizarJuego)
+  );
   contenedor.appendChild(btn);
 
   return contenedor;
@@ -96,8 +95,7 @@ function cargarObjetosDelNivel(nivelActual) {
   return data ? data.objetos : niveles[niveles.length - 1].objetos;
 }
 
-function verificarClasificacion() {
-  // Validar que al menos haya basura en algún bote
+function verificarClasificacion(jugador, pasarNivel, perderVida, finalizarJuego) {
   let algunBoteLleno = false;
   tipos.forEach(tipo => {
     const bote = document.querySelector(`.bote.${tipo}`);
@@ -108,10 +106,9 @@ function verificarClasificacion() {
 
   if (!algunBoteLleno) {
     alert("⚠️ ¡Por favor, llena los botes antes de verificar!");
-    return; // No seguir con la verificación
+    return;
   }
 
-  // Verificar que la basura esté correctamente clasificada
   let correcto = true;
   tipos.forEach(tipo => {
     const bote = document.querySelector(`.bote.${tipo}`);
@@ -122,28 +119,30 @@ function verificarClasificacion() {
   });
 
   if (correcto) {
-    nivel++;
-    reiniciarJuego(`✅ ¡Nivel ${nivel - 1} superado!`);
+    alert(`✅ ¡Nivel ${jugador.nivel} superado!`);
+    pasarNivel();
   } else {
-    vidas--;
-    actualizarVidas();
-    if (vidas <= 0) {
-      nivel = 1;
-      vidas = 3;
-      reiniciarJuego("😓 Te quedaste sin vidas. Reiniciando.");
+    jugador.vidas--;
+    actualizarVidas(jugador);
+    if (jugador.vidas <= 0) {
+      alert("😓 Te quedaste sin vidas. Reiniciando.");
+      finalizarJuego();
     } else {
-      reiniciarJuego("❌ Clasificación incorrecta.");
+      alert("❌ Clasificación incorrecta. Intenta de nuevo.");
+      perderVida();
     }
   }
 }
 
-function actualizarVidas() {
+function actualizarVidas(jugador) {
   const vidasSpan = document.getElementById("vidas");
-  vidasSpan.textContent = "❤️".repeat(vidas);
+  if (vidasSpan) {
+    vidasSpan.textContent = "❤️".repeat(jugador.vidas);
+  }
 }
 
-export function iniciarTemporizador() {
-  let tiempoRestante = tiempo;
+export function iniciarTemporizador(jugador, perderVida, finalizarJuego) {
+  let tiempoRestante = 30;
   const tiempoSpan = document.getElementById("tiempo");
   if (!tiempoSpan) return;
 
@@ -155,29 +154,15 @@ export function iniciarTemporizador() {
 
     if (tiempoRestante <= 0) {
       clearInterval(intervaloTiempo);
-      vidas--;
-      actualizarVidas();
-      if (vidas <= 0) {
-        nivel = 1;
-        vidas = 3;
-        reiniciarJuego("⏰ Tiempo agotado. Reiniciando juego.");
+      jugador.vidas--;
+      actualizarVidas(jugador);
+      if (jugador.vidas <= 0) {
+        alert("⏰ Tiempo agotado. Reiniciando juego.");
+        finalizarJuego();
       } else {
-        reiniciarJuego("⏰ Tiempo agotado. Intenta de nuevo.");
+        alert("⏰ Tiempo agotado. Intenta de nuevo.");
+        perderVida();
       }
     }
   }, 1000);
-}
-
-function reiniciarJuego(mensaje) {
-  alert(mensaje);
-  const root = document.querySelector("#root");
-  root.textContent = "";
-
-  const titulo = document.createElement("h1");
-  titulo.className = "titulo-general";
-  titulo.textContent = "♻️ Clasifica la Basura";
-  root.appendChild(titulo);
-  const juego = crearBasura();
-  root.appendChild(juego);
-  iniciarTemporizador();
 }
