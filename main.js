@@ -9,7 +9,8 @@ let jugador = {
   codigo: "",
   nivel: 1,
   vidas: 3,
-  tiempoTotal: 0
+  tiempoTotal: 0,
+  puntos: 0
 };
 
 let historial = [];
@@ -33,11 +34,13 @@ function cargarJuego() {
 
 function pasarNivel() {
   jugador.nivel++;
+  jugador.puntos += 10; // sumar puntos al pasar nivel
   cargarJuego();
 }
 
 function perderVida() {
   jugador.vidas--;
+  jugador.puntos = Math.max(0, jugador.puntos - 5); // restar puntos sin bajar de 0
   if (jugador.vidas <= 0) {
     finalizarJuego();
   } else {
@@ -53,13 +56,15 @@ function finalizarJuego() {
     avatar: jugador.avatar,
     codigo: jugador.codigo,
     nivel: jugador.nivel,
-    tiempo: jugador.tiempoTotal
+    tiempo: jugador.tiempoTotal,
+    puntos: jugador.puntos
   });
 
   // Reiniciar estado para siguiente partida
   jugador.nivel = 1;
   jugador.vidas = 3;
   jugador.tiempoTotal = 0;
+  jugador.puntos = 0;
 
   mostrarResultados(historial);
 }
@@ -70,7 +75,6 @@ function cargarDOM() {
     jugador.avatar = datos.avatar;
     jugador.codigo = datos.codigo;
 
-    // Opcional: iniciar conteo de tiempo total
     intervaloGlobal = setInterval(() => {
       jugador.tiempoTotal++;
     }, 1000);
@@ -79,5 +83,4 @@ function cargarDOM() {
   });
 }
 
-// Iniciar
 cargarDOM();
